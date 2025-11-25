@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>SACRIFICE</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SACRIFICE">
+  <meta name="theme-color" content="#0d0d10">
+  <style>
+    /* === ФОН С ВОЛНАМИ (как на IMG_3126.jpeg) === */
+    body {
+      background: linear-gradient(135deg, #0a0a12 0%, #0d0d1a 50%, #121220 100%);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      padding: 16px;
+      margin: 0;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* === КНОПКИ (тёмные, но видимые) === */
+    .btn {
+      display: block; width: 100%; padding: 12px;
+      margin: 8px 0; border: none; border-radius: 10px;
+      color: white; font-size: 16px; font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-save { background: #2a3a2a; box-shadow: 0 2px 6px rgba(46, 139, 87, 0.4); }
+    .btn-sold { background: #3a1e1e; box-shadow: 0 2px 6px rgba(178, 34, 34, 0.4); }
+    .btn-edit { background: #3a321e; box-shadow: 0 2px 6px rgba(184, 134, 11, 0.4); }
+    .btn-delete { background: #2a2a2a; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.4); }
+    .btn-export { background: #252f3a; box-shadow: 0 2px 6px rgba(30, 144, 255, 0.4); }
+    .btn-nav { background: #282c3a; box-shadow: 0 2px 6px rgba(106, 90, 205, 0.4); }
+    .btn-filter { background: #3a2e35; box-shadow: 0 2px 6px rgba(210, 105, 30, 0.4); }
+
+    .btn:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+
+    /* === КАРТОЧКИ === */
+    .product-card, .category-summary {
+      background: rgba(20, 20, 28, 0.85);
+      border: 1px solid #353545;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 12px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* === ЛОГОТИП И ЗАГОЛОВОК === */
+    .logo {
+      text-align: center;
+      margin: 16px 0;
+    }
+    .logo svg {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      margin-bottom: 12px;
+    }
+
+    /* === НАДПИСЬ SACRIFICE С ШИПАМИ (SVG) === */
+    .title-sacrifice {
+      text-align: center;
+      margin: 8px 0 20px;
+      font-size: 0;
+    }
+    .title-sacrifice svg {
+      width: 100%;
+      max-width: 500px;
+      height: 50px;
+    }
+
+    /* === ПРОЧЕЕ === */
+    input, textarea, select {
+      width: 100%; padding: 12px; margin: 8px 0;
+      border: 1px solid #444; border-radius: 10px;
+      background: rgba(30, 30, 40, 0.7);
+      color: white;
+      font-size: 16px;
+    }
+    #video {
+      width: 100%; max-width: 400px; height: auto;
+      background: #000; border-radius: 12px;
+      display: block; margin: 0 auto;
+    }
+    .quantity-controls {
+      display: flex; align-items: center; gap: 8px;
+      margin: 10px 0;
+    }
+    .quantity-controls button {
+      width: 40px; height: 40px; border-radius: 50%;
+      font-size: 18px;
+    }
+    .quantity-controls span {
+      min-width: 40px; text-align: center;
+      font-size: 18px; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ЛОГОТИП -->
+<div class="logo">
+  <svg viewBox="0 0 100 100" style="display:inline-block;">
+    <path d="M50,5 L90,25 L85,70 L50,95 L15,70 L10,25 Z" fill="#1e1e28" stroke="#4a5e8a" stroke-width="2"/>
+    <text x="50" y="65" text-anchor="middle" fill="#b0c4de" font-size="40" font-family="Arial" font-weight="bold">S</text>
+  </svg>
+</div>
+
+<!-- НАДПИСЬ SACRIFICE С ШИПАМИ -->
+<div class="title-sacrifice">
+  <svg viewBox="0 0 600 80" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <filter id="spikes" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+    <text x="300" y="60" text-anchor="middle" fill="#ffffff" font-family="Arial" font-weight="bold" font-size="56" filter="url(#spikes)">
+      SACRIFICE
+    </text>
+  </svg>
+</div>
+
+<video id="video" autoplay playsinline muted></video>
+<button id="startScan" class="btn btn-save">Начать сканирование</button>
+
+<div id="form" style="display:none;">
+  <h3>Товар: <span id="barcode-display"></span></h3>
+  <input type="text" id="brand" placeholder="Марка / Модель">
+  <textarea id="desc" placeholder="Описание товара" rows="2"></textarea>
+  <textarea id="specs" placeholder="Характеристики" rows="2"></textarea>
+  <select id="category">
+    <option value="Стиральные машины">Стиральные машины</option>
+    <option value="Холодильники и морозильники">Холодильники и морозильники</option>
+    <option value="Плиты и варочные панели">Плиты и варочные панели</option>
+    <option value="Посудомоечные машины">Посудомоечные машины</option>
+    <option value="Вытяжки и кондиционеры">Вытяжки и кондиционеры</option>
+    <option value="Мелкая техника">Мелкая техника</option>
+    <option value="Встройка">Встройка</option>
+    <option value="Прочее">Прочее</option>
+  </select>
+  <select id="status">
+    <option value="В наличии">В наличии</option>
+    <option value="В ремонте">В ремонте</option>
+    <option value="Зарезервировано">Зарезервировано</option>
+    <option value="Брак / Списано">Брак / Списано</option>
+    <option value="Ожидает поступления">Ожидает поступления</option>
+  </select>
+  <input type="number" id="price" step="0.01" placeholder="Цена, ₽">
+  <div class="quantity-controls">
+    <button id="decQty" class="btn btn-edit">–</button>
+    <span id="qtyValue">1</span>
+    <button id="incQty" class="btn btn-edit">+</button>
+  </div>
+  <button id="saveProduct" class="btn btn-save">Сохранить</button>
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+  <button id="exportExcelBtn" class="btn btn-export" style="flex:1;min-width:120px;">Экспорт в Excel</button>
+  <button id="exportJsonBtn" class="btn btn-export" style="flex:1;min-width:120px;">Экспорт в JSON</button>
+  <button id="importJsonBtn" class="btn btn-export" style="flex:1;min-width:120px;">Импорт из JSON</button>
+</div>
+<input type="file" id="importFile" accept=".json" style="display:none;">
+
+<button id="themeToggle" class="btn btn-nav">Тема: Тёмная</button>
+<input type="text" id="searchInput" placeholder="Поиск по штрихкоду или марке..." style="width:100%;padding:10px;margin:10px 0;border-radius:8px;">
+
+<div id="categorySummary"></div>
+
+<div id="results">
+  <h3 style="text-align:center;">Мои товары</h3>
+  <div id="productList"></div>
+</div>
+
+<button id="openSalesLog" class="btn btn-nav">Журнал продаж</button>
+
+<!-- Экран журнала -->
+<div id="sales-screen" style="display:none;">
+  <h2 style="text-align:center;">Журнал продаж — SACRIFICE</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+    <input type="date" id="dateFrom" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1px solid #444;background:rgba(30,30,40,0.7);color:white;">
+    <input type="date" id="dateTo" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1px solid #444;background:rgba(30,30,40,0.7);color:white;">
+    <button id="applyDateFilter" class="btn btn-filter" style="flex:1;min-width:120px;">Применить</button>
+  </div>
+  <select id="saleCategoryFilter" class="btn-nav" style="width:100%;margin:10px 0;">
+    <option value="all">Все категории</option>
+    <option value="Стиральные машины">Стиральные машины</option>
+    <option value="Холодильники и морозильники">Холодильники</option>
+    <option value="Плиты и варочные панели">Плиты</option>
+    <option value="Посудомоечные машины">Посудомойки</option>
+    <option value="Вытяжки и кондиционеры">Вытяжки/Кондиционеры</option>
+    <option value="Мелкая техника">Мелкая техника</option>
+    <option value="Встройка">Встройка</option>
+    <option value="Прочее">Прочее</option>
+  </select>
+  <button id="exportSalesExcel" class="btn btn-export">Экспорт продаж в Excel</button>
+  <button id="backToInventory" class="btn btn-nav">Назад к товарам</button>
+  <div id="salesList" style="margin-top:20px;"></div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script type="module">
+  import { BrowserMultiFormatReader } from 'https://unpkg.com/@zxing/library@0.20.0/umd/index.js';
+
+  const codeReader = new BrowserMultiFormatReader();
+  const video = document.getElementById('video');
+  const startBtn = document.getElementById('startScan');
+  const formDiv = document.getElementById('form');
+  const barcodeDisplay = document.getElementById('barcode-display');
+  let currentBarcode = '';
+  let currentEditingId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.className = 'theme-dark';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = today;
+    document.getElementById('dateTo').value = today;
+    displayProducts();
+    updateCategorySummary();
+  });
+
+  startBtn.onclick = async () => {
+    try {
+      await codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+        if (result) {
+          currentBarcode = result.getText();
+          barcodeDisplay.textContent = currentBarcode;
+          formDiv.style.display = 'block';
+          codeReader.reset();
+          startBtn.textContent = 'Отсканировано';
+          startBtn.disabled = true;
+          currentEditingId = null;
+          resetForm();
+        }
+      });
+    } catch (e) {
+      alert('Ошибка камеры. Используйте Safari на iPhone.');
+    }
+  };
+
+  let tempQuantity = 1;
+  document.getElementById('incQty').onclick = () => { if (tempQuantity < 999) tempQuantity++; document.getElementById('qtyValue').textContent = tempQuantity; };
+  document.getElementById('decQty').onclick = () => { if (tempQuantity > 1) tempQuantity--; document.getElementById('qtyValue').textContent = tempQuantity; };
+
+  document.getElementById('saveProduct').onclick = () => {
+    const brand = document.getElementById('brand').value.trim();
+    const desc = document.getElementById('desc').value.trim();
+    const specs = document.getElementById('specs').value.trim();
+    const category = document.getElementById('category').value;
+    const status = document.getElementById('status').value;
+    const priceStr = document.getElementById('price').value.trim();
+    const price = priceStr ? parseFloat(priceStr) : null;
+    const quantity = tempQuantity;
+
+    if (!brand && !desc) {
+      alert('Введите хотя бы марку или описание');
+      return;
+    }
+
+    const product = {
+      id: currentEditingId || Date.now().toString(),
+      barcode: currentBarcode,
+      brand,
+      desc,
+      specs,
+      category,
+      status,
+      price,
+      quantity,
+      createdAt: currentEditingId ? null : Date.now(),
+      lastUpdated: Date.now()
+    };
+
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    if (currentEditingId) {
+      const index = products.findIndex(p => p.id === currentEditingId);
+      if (index !== -1) products[index] = product;
+    } else {
+      if (!product.createdAt) product.createdAt = Date.now();
+      products.push(product);
+    }
+    localStorage.setItem('my_products', JSON.stringify(products));
+
+    alert('Сохранено!');
+    resetForm();
+    formDiv.style.display = 'none';
+    startBtn.disabled = false;
+    startBtn.textContent = 'Начать сканирование';
+    displayProducts();
+    updateCategorySummary();
+  };
+
+  function resetForm() {
+    document.getElementById('brand').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('specs').value = '';
+    document.getElementById('category').value = 'Стиральные машины';
+    document.getElementById('status').value = 'В наличии';
+    document.getElementById('price').value = '';
+    tempQuantity = 1;
+    document.getElementById('qtyValue').textContent = '1';
+  }
+
+  function displayProducts(filter = '') {
+    const list = document.getElementById('productList');
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    products.sort((a, b) => b.lastUpdated - a.lastUpdated);
+    const filtered = filter ? products.filter(p => p.barcode.includes(filter) || (p.brand && p.brand.toLowerCase().includes(filter.toLowerCase()))) : products;
+    list.innerHTML = filtered.map(p => {
+      const priceStr = p.price !== null && p.price !== undefined ? (p.price.toLocaleString('ru-RU') + ' ₽') : 'Цена не указана';
+      return `
+        <div class="product-card">
+          <strong>ШК:</strong> ${p.barcode}<br>
+          ${p.brand ? `<strong>Марка:</strong> ${p.brand}<br>` : ''}
+          ${p.desc ? `<div>${p.desc}</div>` : ''}
+          ${p.specs ? `<div style="color:#aaa;font-size:14px;">${p.specs}</div>` : ''}
+          <div><strong>Категория:</strong> ${p.category}</div>
+          <div><strong>Статус:</strong> ${p.status}</div>
+          <div><strong>Цена:</strong> ${priceStr}</div>
+          <div class="quantity-controls" style="justify-content:flex-start;margin:10px 0;">
+            <button onclick="changeQuantity('${p.id}', -1)" class="btn btn-edit" style="width:30px;height:30px;font-size:14px;">–</button>
+            <span style="min-width:30px;text-align:center;">${p.quantity}</span>
+            <button onclick="changeQuantity('${p.id}', 1)" class="btn btn-edit" style="width:30px;height:30px;font-size:14px;">+</button>
+          </div>
+          <button onclick="markAsSold('${p.id}')" class="btn btn-sold" style="width:auto;margin:5px 0;">Продано</button>
+          <button onclick="editProduct('${p.id}')" class="btn btn-edit" style="width:auto;margin:5px 0;">Редактировать</button>
+          <button onclick="deleteProduct('${p.id}')" class="btn btn-delete" style="width:auto;margin:5px 0;">Удалить</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.changeQuantity = (id, delta) => {
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    const product = products.find(p => p.id === id);
+    if (product) {
+      product.quantity = Math.max(1, product.quantity + delta);
+      product.lastUpdated = Date.now();
+      localStorage.setItem('my_products', JSON.stringify(products));
+      displayProducts(document.getElementById('searchInput').value);
+      updateCategorySummary();
+    }
+  };
+
+  window.markAsSold = (id) => {
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+    const currentQty = product.quantity;
+    const soldStr = prompt(`Сколько штук продано?\nВ наличии: ${currentQty}`, '1');
+    if (soldStr === null) return;
+    const sold = parseInt(soldStr);
+    if (isNaN(sold) || sold < 1) { alert('Введите корректное число ≥ 1'); return; }
+    if (sold > currentQty) { alert('Нельзя продать больше, чем есть в наличии!'); return; }
+    product.quantity = currentQty - sold;
+    product.lastUpdated = Date.now();
+    localStorage.setItem('my_products', JSON.stringify(products));
+    const saleRecord = {
+      id: Date.now().toString(),
+      barcode: product.barcode,
+      brand: product.brand,
+      desc: product.desc,
+      category: product.category,
+      price: product.price,
+      quantity: sold,
+      total: product.price ? product.price * sold : null,
+      timestamp: Date.now()
+    };
+    const sales = JSON.parse(localStorage.getItem('sales_log') || '[]');
+    sales.unshift(saleRecord);
+    localStorage.setItem('sales_log', JSON.stringify(sales));
+    displayProducts();
+    updateCategorySummary();
+    alert(`Продано ${sold} шт.`);
+  };
+
+  window.editProduct = (id) => {
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+    currentBarcode = product.barcode;
+    barcodeDisplay.textContent = currentBarcode;
+    document.getElementById('brand').value = product.brand || '';
+    document.getElementById('desc').value = product.desc || '';
+    document.getElementById('specs').value = product.specs || '';
+    document.getElementById('category').value = product.category;
+    document.getElementById('status').value = product.status;
+    document.getElementById('price').value = product.price !== undefined && product.price !== null ? product.price : '';
+    tempQuantity = product.quantity;
+    document.getElementById('qtyValue').textContent = product.quantity;
+    currentEditingId = product.id;
+    formDiv.style.display = 'block';
+    startBtn.disabled = true;
+    startBtn.textContent = 'Редактирование';
+  };
+
+  window.deleteProduct = (id) => {
+    if (!confirm('Удалить товар? Действие нельзя отменить.')) return;
+    let products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    products = products.filter(p => p.id !== id);
+    localStorage.setItem('my_products', JSON.stringify(products));
+    displayProducts();
+    updateCategorySummary();
+  };
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    displayProducts(e.target.value.trim());
+  });
+
+  function getCategoryColorClass(category) {
+    if (!category) return '';
+    if (category.includes('Стиральные')) return 'color-washing';
+    if (category.includes('Холодильники')) return 'color-fridge';
+    if (category.includes('Плиты') || category.includes('варочные')) return 'color-stove';
+    if (category.includes('Посудомоечные')) return 'color-dishwasher';
+    if (category.includes('Вытяжки') || category.includes('кондиционеры')) return 'color-hoodac';
+    if (category.includes('Мелкая')) return 'color-small';
+    if (category === 'Встройка') return 'color-built-in';
+    return 'color-other';
+  }
+
+  function updateCategorySummary() {
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    const totals = {};
+    products.forEach(p => {
+      const cat = p.category || 'Прочее';
+      totals[cat] = (totals[cat] || 0) + (p.quantity || 0);
+    });
+    const summaryDiv = document.getElementById('categorySummary');
+    summaryDiv.innerHTML = Object.entries(totals).filter(([cat, total]) => total > 0).map(([cat, total]) => 
+      `<div class="category-summary ${getCategoryColorClass(cat)}">
+        <strong>${cat}</strong> — всего: <span>${total}</span> ед.
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('themeToggle').onclick = () => {
+    const isDark = document.body.classList.contains('theme-dark');
+    document.body.className = isDark ? 'theme-light' : 'theme-dark';
+    document.getElementById('themeToggle').textContent = `Тема: ${isDark ? 'Светлая' : 'Тёмная'}`;
+  };
+
+  document.getElementById('exportExcelBtn').onclick = () => {
+    const products = JSON.parse(localStorage.getItem('my_products') || '[]');
+    if (products.length === 0) { alert('Нет данных для экспорта'); return; }
+    const data = products.map(p => ({
+      'Штрихкод': p.barcode,
+      'Марка / Модель': p.brand || '',
+      'Описание': p.desc || '',
+      'Характеристики': p.specs || '',
+      'Категория': p.category || '',
+      'Статус': p.status || '',
+      'Цена, ₽': p.price || '',
+      'Количество': p.quantity || 0,
+      'Дата обновления': new Date(p.lastUpdated).toLocaleString('ru-RU')
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Товары");
+    XLSX.writeFile(wb, "инвентаризация_SACRIFICE.xlsx");
+  };
+
+  document.getElementById('exportSalesExcel').onclick = () => {
+    const sales = JSON.parse(localStorage.getItem('sales_log') || '[]');
+    if (sales.length === 0) { alert('Нет данных о продажах'); return; }
+    const data = sales.map(s => ({
+      'Дата продажи': new Date(s.timestamp).toLocaleString('ru-RU'),
+      'Штрихкод': s.barcode,
+      'Марка / Модель': s.brand || '',
+      'Описание': s.desc || '',
+      'Категория': s.category || '',
+      'Продано, шт.': s.quantity,
+      'Цена, ₽': s.price || '',
+      'Сумма, ₽': s.total || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Продажи");
+    XLSX.writeFile(wb, "журнал_продаж_SACRIFICE.xlsx");
+  };
+
+  document.getElementById('exportJsonBtn').onclick = () => {
+    const data = {
+      products: JSON.parse(localStorage.getItem('my_products') || '[]'),
+      sales: JSON.parse(localStorage.getItem('sales_log') || '[]')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'SACRIFICE_backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById('importJsonBtn').onclick = () => {
+    document.getElementById('importFile').click();
+  };
+  document.getElementById('importFile').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.products) localStorage.setItem('my_products', JSON.stringify(data.products));
+        if (data.sales) localStorage.setItem('sales_log', JSON.stringify(data.sales));
+        alert('Данные успешно импортированы!');
+        displayProducts();
+        updateCategorySummary();
+      } catch (err) {
+        alert('Ошибка при импорте файла');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  document.getElementById('openSalesLog').onclick = () => {
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('sales-screen').style.display = 'block';
+    displaySales();
+  };
+
+  document.getElementById('backToInventory').onclick = () => {
+    document.getElementById('sales-screen').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+  };
+
+  document.getElementById('applyDateFilter').onclick = () => {
+    displaySales();
+  };
+
+  function displaySales() {
+    const sales = JSON.parse(localStorage.getItem('sales_log') || '[]');
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const categoryFilter = document.getElementById('saleCategoryFilter').value;
+    const filtered = sales.filter(s => {
+      const saleDate = new Date(s.timestamp);
+      const from = dateFrom ? new Date(dateFrom) : null;
+      const to = dateTo ? new Date(dateTo) : null;
+      let inDate = true;
+      if (from) inDate = inDate && saleDate >= from.setHours(0,0,0,0);
+      if (to) inDate = inDate && saleDate <= to.setHours(23,59,59,999);
+      let inCategory = true;
+      if (categoryFilter !== 'all') inCategory = s.category === categoryFilter;
+      return inDate && inCategory;
+    });
+    filtered.sort((a, b) => b.timestamp - a.timestamp);
+    const list = document.getElementById('salesList');
+    list.innerHTML = filtered.map(s => {
+      const priceStr = s.price ? s.price.toLocaleString('ru-RU') + ' ₽' : '—';
+      const totalStr = s.total ? s.total.toLocaleString('ru-RU') + ' ₽' : '—';
+      return `
+        <div class="product-card">
+          <div><strong>${new Date(s.timestamp).toLocaleString('ru-RU')}</strong></div>
+          <div><strong>ШК:</strong> ${s.barcode}</div>
+          ${s.brand ? `<div><strong>Марка:</strong> ${s.brand}</div>` : ''}
+          ${s.desc ? `<div>${s.desc}</div>` : ''}
+          <div><strong>Категория:</strong> ${s.category || '—'}</div>
+          <div>Продано: ${s.quantity} шт. × ${priceStr} = <strong>${totalStr}</strong></div>
+        </div>
+      `;
+    }).join('');
+  }
+</script>
+
+</body>
+</html>
